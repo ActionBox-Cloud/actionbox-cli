@@ -163,14 +163,15 @@ func TestCreateActionSendsTypedInteractionAndExposesIt(t *testing.T) {
 	decisionContext := json.RawMessage(`{"schema_version":1,"reason":"Production risk","proposed_change":"Deploy","risk_level":"high","reversibility":"reversible"}`)
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		var payload struct {
-			Options         []Option        `json:"options"`
-			Interaction     json.RawMessage `json:"interaction"`
-			Context         json.RawMessage `json:"context"`
-			OnExpire        json.RawMessage `json:"on_expire"`
-			Controls        json.RawMessage `json:"controls"`
-			DecisionClass   string          `json:"decision_class"`
-			DecisionContext json.RawMessage `json:"decision_context"`
-			AssigneeEmail   string          `json:"assignee_email"`
+			Options            []Option        `json:"options"`
+			Interaction        json.RawMessage `json:"interaction"`
+			Context            json.RawMessage `json:"context"`
+			OnExpire           json.RawMessage `json:"on_expire"`
+			Controls           json.RawMessage `json:"controls"`
+			DecisionClass      string          `json:"decision_class"`
+			DecisionContext    json.RawMessage `json:"decision_context"`
+			AssigneeEmail      string          `json:"assignee_email"`
+			ContextRequestMode string          `json:"context_request_mode"`
 		}
 		if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
 			t.Fatalf("decode create request: %v", err)
@@ -193,20 +194,24 @@ func TestCreateActionSendsTypedInteractionAndExposesIt(t *testing.T) {
 		if payload.AssigneeEmail != "reviewer@example.com" {
 			t.Fatalf("assignee_email=%q", payload.AssigneeEmail)
 		}
+		if payload.ContextRequestMode != "poll" {
+			t.Fatalf("context_request_mode=%q", payload.ContextRequestMode)
+		}
 		writer.Header().Set("Content-Type", "application/json")
 		_, _ = fmt.Fprint(writer, `{"data":{"id":"act_1","title":"Deploy?","status":"open","interaction":{"type":"boolean","label":"Deploy?"},"context":[{"type":"key_value","items":{"environment":"production"}}],"on_expire":{"type":"return_expired"},"response":null}}`)
 	}))
 	defer server.Close()
 
 	action, err := New(server.URL, "token").CreateAction(context.Background(), CreateAction{
-		Title:           "Deploy?",
-		Interaction:     interaction,
-		Context:         contextJSON,
-		OnExpire:        onExpire,
-		Controls:        controls,
-		DecisionClass:   "production_deployment",
-		DecisionContext: decisionContext,
-		AssigneeEmail:   "reviewer@example.com",
+		Title:              "Deploy?",
+		Interaction:        interaction,
+		Context:            contextJSON,
+		OnExpire:           onExpire,
+		Controls:           controls,
+		DecisionClass:      "production_deployment",
+		DecisionContext:    decisionContext,
+		AssigneeEmail:      "reviewer@example.com",
+		ContextRequestMode: "poll",
 	}, "key")
 	if err != nil {
 		t.Fatalf("CreateAction returned error: %v", err)

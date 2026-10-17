@@ -138,6 +138,25 @@ func TestParseSendSupportsContextAndExpirationOutcome(t *testing.T) {
 	}
 }
 
+func TestParseSendSupportsContextRequestMode(t *testing.T) {
+	flags, _, err := parseSend([]string{
+		"Review?",
+		"--context-request-mode", "poll",
+	}, "send")
+	if err != nil {
+		t.Fatalf("parseSend returned error: %v", err)
+	}
+	if flags.contextRequestMode != "poll" {
+		t.Fatalf("contextRequestMode=%q", flags.contextRequestMode)
+	}
+	if _, _, err := parseSend([]string{
+		"Review?",
+		"--context-request-mode", "callback",
+	}, "send"); err == nil {
+		t.Fatal("parseSend accepted callback context mode without --callback-url")
+	}
+}
+
 func TestParseSendSupportsDecisionBrief(t *testing.T) {
 	decisionContext := `{"schema_version":1,"reason":"Production risk","proposed_change":"Deploy 2.18.0","risk_level":"high","reversibility":"reversible"}`
 	flags, title, err := parseSend([]string{

@@ -247,6 +247,7 @@ type sendFlags struct {
 	jsonOutput          bool
 	quiet               bool
 	noOrigin            bool
+	contextRequestMode  string
 	options             stringList
 	interaction         json.RawMessage
 	context             json.RawMessage
@@ -276,6 +277,7 @@ func parseSend(args []string, command string) (sendFlags, string, error) {
 	fs.StringVar(&flags.openURL, "open-url", "", "URL to open for context")
 	fs.StringVar(&flags.dedupeKey, "dedupe-key", "", "Merge repeated open occurrences")
 	fs.StringVar(&flags.callbackURL, "callback-url", "", "HTTPS callback destination")
+	fs.StringVar(&flags.contextRequestMode, "context-request-mode", "unsupported", "unsupported, poll, or callback")
 	fs.StringVar(&flags.expires, "expires", "", "RFC3339 expiration timestamp")
 	fs.StringVar(&flags.assigneeEmail, "assignee-email", "", "Assign to an active workspace reviewer")
 	fs.StringVar(&flags.assigneeUserID, "assignee-user-id", "", "Assign by stable ActionBox user ID")
@@ -312,6 +314,12 @@ func parseSend(args []string, command string) (sendFlags, string, error) {
 	}
 	if flags.priority != "low" && flags.priority != "normal" && flags.priority != "high" && flags.priority != "urgent" {
 		return flags, "", errors.New("priority must be one of: low, normal, high, urgent")
+	}
+	if flags.contextRequestMode != "unsupported" && flags.contextRequestMode != "poll" && flags.contextRequestMode != "callback" {
+		return flags, "", errors.New("context-request-mode must be one of: unsupported, poll, callback")
+	}
+	if flags.contextRequestMode == "callback" && strings.TrimSpace(flags.callbackURL) == "" {
+		return flags, "", errors.New("context-request-mode callback requires --callback-url")
 	}
 	if len(flags.options) > 3 {
 		return flags, "", errors.New("at most 3 options are supported")
@@ -506,24 +514,25 @@ func send(args []string, ask bool) error {
 		options = append(options, api.Option{ID: id, Label: label, Style: style})
 	}
 	payload := api.CreateAction{
-		Title:           title,
-		Description:     flags.description,
-		Priority:        flags.priority,
-		OpenURL:         flags.openURL,
-		DedupeKey:       flags.dedupeKey,
-		CallbackURL:     flags.callbackURL,
-		ExpiresAt:       flags.expires,
-		Options:         options,
-		Interaction:     flags.interaction,
-		Context:         flags.context,
-		DecisionClass:   flags.decisionClass,
-		DecisionContext: flags.decisionContext,
-		OnExpire:        flags.onExpire,
-		Controls:        flags.controls,
-		AssigneeEmail:   flags.assigneeEmail,
-		AssigneeUserID:  flags.assigneeUserID,
-		ReviewerEmails:  flags.reviewerEmails,
-		ReviewerUserIDs: flags.reviewerUserIDs,
+		Title:              title,
+		Description:        flags.description,
+		Priority:           flags.priority,
+		OpenURL:            flags.openURL,
+		DedupeKey:          flags.dedupeKey,
+		CallbackURL:        flags.callbackURL,
+		ContextRequestMode: flags.contextRequestMode,
+		ExpiresAt:          flags.expires,
+		Options:            options,
+		Interaction:        flags.interaction,
+		Context:            flags.context,
+		DecisionClass:      flags.decisionClass,
+		DecisionContext:    flags.decisionContext,
+		OnExpire:           flags.onExpire,
+		Controls:           flags.controls,
+		AssigneeEmail:      flags.assigneeEmail,
+		AssigneeUserID:     flags.assigneeUserID,
+		ReviewerEmails:     flags.reviewerEmails,
+		ReviewerUserIDs:    flags.reviewerUserIDs,
 	}
 	if flags.noChat {
 		payload.ChatDelivery = "disabled"
@@ -676,11 +685,12 @@ func get(args []string) error {
 	fs := flag.NewFlagSet("get", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	jsonOutput := fs.Bool("json", false, "Print JSON")
+	showContext := fs.Bool("context", false, "Show context with syntax colours in interactive terminals")
 	if err := fs.Parse(reorderFlags(args, fs)); err != nil {
 		return err
 	}
 	if fs.NArg() != 1 {
-		return errors.New("usage: actionbox get <action-id> [--json]")
+		return errors.New("usage: actionbox get <action-id> [--json] [--context]")
 	}
 	cfg, err := config.Load()
 	if err != nil {
@@ -690,7 +700,14 @@ func get(args []string) error {
 	if err != nil {
 		return err
 	}
-	return printAction(action, *jsonOutput, false)
+	if err := printAction(action, *jsonOutput, false); err != nil {
+		return err
+	}
+	if *showContext && !*jsonOutput {
+		_, noColor := os.LookupEnv("NO_COLOR")
+		return printContext(os.Stdout, action.Context, term.IsTerminal(int(os.Stdout.Fd())) && !noColor && os.Getenv("TERM") != "dumb")
+	}
+	return nil
 }
 
 func update(args []string) error {

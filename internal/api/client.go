@@ -202,6 +202,7 @@ type Action struct {
 	DecisionClass      string          `json:"decision_class"`
 	DecisionContext    json.RawMessage `json:"decision_context"`
 	ContextRequest     json.RawMessage `json:"context_request"`
+	ContextRequestMode string          `json:"context_request_mode"`
 	OnExpire           json.RawMessage `json:"on_expire"`
 	ApprovalPolicy     *ApprovalPolicy `json:"approval_policy"`
 	ApprovalProgress   json.RawMessage `json:"approval_progress"`
@@ -215,28 +216,29 @@ type UpdateAction struct {
 }
 
 type CreateAction struct {
-	ChatDelivery    string          `json:"chat_delivery,omitempty"`
-	Title           string          `json:"title"`
-	Description     string          `json:"description,omitempty"`
-	Priority        string          `json:"priority,omitempty"`
-	OpenURL         string          `json:"open_url,omitempty"`
-	DedupeKey       string          `json:"dedupe_key,omitempty"`
-	CallbackURL     string          `json:"callback_url,omitempty"`
-	ExpiresAt       string          `json:"expires_at,omitempty"`
-	OnExpire        json.RawMessage `json:"on_expire,omitempty"`
-	Context         json.RawMessage `json:"context,omitempty"`
-	DecisionClass   string          `json:"decision_class,omitempty"`
-	DecisionContext json.RawMessage `json:"decision_context,omitempty"`
-	Options         []Option        `json:"options,omitempty"`
-	Interaction     json.RawMessage `json:"interaction,omitempty"`
-	Controls        json.RawMessage `json:"controls,omitempty"`
-	Metadata        map[string]any  `json:"metadata,omitempty"`
-	AssigneeEmail   string          `json:"assignee_email,omitempty"`
-	AssigneeUserID  string          `json:"assignee_user_id,omitempty"`
-	Visibility      string          `json:"visibility,omitempty"`
-	ReviewerEmails  []string        `json:"reviewer_emails,omitempty"`
-	ReviewerUserIDs []string        `json:"reviewer_user_ids,omitempty"`
-	ApprovalPolicy  *ApprovalPolicy `json:"approval_policy,omitempty"`
+	ChatDelivery       string          `json:"chat_delivery,omitempty"`
+	ContextRequestMode string          `json:"context_request_mode,omitempty"`
+	Title              string          `json:"title"`
+	Description        string          `json:"description,omitempty"`
+	Priority           string          `json:"priority,omitempty"`
+	OpenURL            string          `json:"open_url,omitempty"`
+	DedupeKey          string          `json:"dedupe_key,omitempty"`
+	CallbackURL        string          `json:"callback_url,omitempty"`
+	ExpiresAt          string          `json:"expires_at,omitempty"`
+	OnExpire           json.RawMessage `json:"on_expire,omitempty"`
+	Context            json.RawMessage `json:"context,omitempty"`
+	DecisionClass      string          `json:"decision_class,omitempty"`
+	DecisionContext    json.RawMessage `json:"decision_context,omitempty"`
+	Options            []Option        `json:"options,omitempty"`
+	Interaction        json.RawMessage `json:"interaction,omitempty"`
+	Controls           json.RawMessage `json:"controls,omitempty"`
+	Metadata           map[string]any  `json:"metadata,omitempty"`
+	AssigneeEmail      string          `json:"assignee_email,omitempty"`
+	AssigneeUserID     string          `json:"assignee_user_id,omitempty"`
+	Visibility         string          `json:"visibility,omitempty"`
+	ReviewerEmails     []string        `json:"reviewer_emails,omitempty"`
+	ReviewerUserIDs    []string        `json:"reviewer_user_ids,omitempty"`
+	ApprovalPolicy     *ApprovalPolicy `json:"approval_policy,omitempty"`
 }
 
 // Watch is the safe Watch representation returned by the API.  A heartbeat

@@ -34,6 +34,7 @@ actionbox ask "Deploy 2.18.0?" \
   --option approve --option reject \
   --decision-class production_deployment \
   --decision-context-json @decision-context.json \
+  --context-request-mode poll \
   --wait
 ```
 
@@ -45,6 +46,11 @@ use the workspace default reviewer or normal plan routing.
 `decision-context.json` uses the same `decision_context` object documented by
 the API. Supporting diffs, logs, metrics, commands, and links still belong in
 `--context-json`.
+
+Use `--context-request-mode poll` only when another process monitors the Action
+and can answer follow-ups. Use `callback` together with `--callback-url` when
+that webhook handler supports `action.context_requested`. The default is
+`unsupported`, so static scripts do not expose a request button.
 
 When `actionbox get ACTION_ID --json` includes a pending `context_request`, add
 the requested evidence or Decision Brief to that same Action:
